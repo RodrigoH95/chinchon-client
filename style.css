@@ -117,3 +117,28 @@ body {
   right: 0;
   transform: scale(-1, -1)
 }
+
+@media screen and (max-width: 700px) {
+  #tablero {
+    justify-content: space-around;
+  }
+
+  .carta {
+    width: 65px;
+    height: 90px;
+  }
+
+  .palo {
+    width: 25px;
+    height: 25px;
+  }
+
+  .simbolo {
+    font-size: 0.8rem;
+  }
+
+  #resto {
+    width: 65px;
+    height: 90px;
+  }
+}

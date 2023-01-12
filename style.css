@@ -78,6 +78,11 @@ body {
   filter:brightness(120%);
 }
 
+.carta:not(.oponente) {
+  outline: 1px solid black;
+  outline-offset: -7px;
+}
+
 .simbolo {
   margin: 0.3rem;
   text-align: center;

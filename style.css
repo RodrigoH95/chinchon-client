@@ -141,4 +141,8 @@ body {
     width: 65px;
     height: 90px;
   }
+
+  .player > .carta {
+    margin-right: -2rem;
+  }
 }

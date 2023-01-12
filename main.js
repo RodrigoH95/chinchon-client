@@ -2,7 +2,7 @@ const resto = document.getElementById("resto");
 const descarte = document.getElementById("descarte");
 const jugador = document.getElementById("jugador");
 const oponente = document.getElementById("oponente");
-const socket = io("http://localhost:3000");
+const socket = io("https://chinchon-server.onrender.com");
 
 let mazo = [];
 

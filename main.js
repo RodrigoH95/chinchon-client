@@ -5,7 +5,7 @@ const oponente = document.getElementById("oponente");
 const local = document.getElementById("local");
 const turnoActual = document.getElementById("turno");
 const adversario = document.getElementById("adversario");
-const socket = io("http://localhost:3000");
+const socket = io("https://chinchon-server.onrender.com");
 //https://chinchon-server.onrender.com
 let mazo = [];
 let turno = null;
@@ -14,7 +14,7 @@ let descartoCarta = null;
 let nombreJugador1 = null;
 let nombreJugador2 = null;
 
-const DEBUG = true;
+const DEBUG = false;
 
 socket.on("connect", () => {
   console.log("Te uniste a la sala");

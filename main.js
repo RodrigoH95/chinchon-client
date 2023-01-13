@@ -14,7 +14,7 @@ let descartoCarta = null;
 let nombreJugador1 = null;
 let nombreJugador2 = null;
 
-const DEBUG = true;
+const DEBUG = false;
 
 socket.on("connect", () => {
   console.log("Te uniste a la sala");

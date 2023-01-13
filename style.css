@@ -92,6 +92,14 @@ table, th, td {
   align-items: center;
 }
 
+.oponente {
+  background-color: #b72929;
+}
+
+.corte {
+  transform: rotate(-15deg);
+}
+
 .carta:hover {
   z-index: 100;
   transform: scale(110%);

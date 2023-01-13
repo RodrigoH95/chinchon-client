@@ -5,14 +5,19 @@ const oponente = document.getElementById("oponente");
 const local = document.getElementById("local");
 const turnoActual = document.getElementById("turno");
 const adversario = document.getElementById("adversario");
+const botonCortar = document.getElementById("btn-cortar");
+
 const socket = io("https://chinchon-server.onrender.com");
 //https://chinchon-server.onrender.com
+// http://localhost:3000
+
 let mazo = [];
 let turno = null;
 let tomoCarta = null;
 let descartoCarta = null;
 let nombreJugador1 = null;
 let nombreJugador2 = null;
+let corta = false;
 
 const DEBUG = false;
 
@@ -50,7 +55,7 @@ socket.on("turno", (id) => {
 
 socket.on("recibe-carta", ({ valor, palo }) => {
   const carta = generateCard(valor, palo, false);
-  mazo.push({ valor, palo });
+  mazo.push({ valor, palo, id: carta.id});
   jugador.appendChild(carta);
 });
 
@@ -58,8 +63,10 @@ socket.on("oponente-recibe", ({ valor, palo }) => {
   oponente.appendChild(generateCard(valor, palo, true));
 });
 
-socket.on("descarta", ({ valor, palo }, index = -1) => {
-  const carta = generateCard(valor, palo, false);
+socket.on("descarta", ({ valor, palo }, index = -1, jugadorCorta) => {
+  corta = jugadorCorta;
+  const carta = generateCard(valor, palo, corta);
+  carta.removeAttribute("draggable");
   descarte.appendChild(carta);
   if (index >= 0) {
     oponente.removeChild(oponente.childNodes[index]);
@@ -78,6 +85,11 @@ socket.on("no-cards", () => {
     resto.style.backgroundColor = "#b72929";
   }, 1500);
 });
+
+socket.on("finaliza-ronda", () => {
+  console.log("Finaliza la ronda");
+  turno = false;
+})
 
 function createCardId() {
   const letters = "abcdefghijklmnopqrstuvwxyz";
@@ -105,6 +117,7 @@ function generateCard(valor, palo, hidden = false) {
   card.id = createCardId();
   if (hidden) {
     card.classList.add("oponente");
+    if(corta) card.classList.add("corte");
     return card;
   }
   const simbolo = document.createElement("div");
@@ -119,25 +132,30 @@ function generateCard(valor, palo, hidden = false) {
   simbolo.appendChild(imgCont);
   if (palo === "comodin") {
     card.appendChild(simbolo);
-    return card;
+  } else {
+    const topLeft = document.createElement("div");
+    topLeft.classList.add("top-left");
+    const bottomRight = document.createElement("div");
+    bottomRight.classList.add("bottom-right");
+
+    topLeft.appendChild(simbolo);
+    bottomRight.appendChild(simbolo.cloneNode(true));
+
+    card.appendChild(topLeft);
+    card.appendChild(bottomRight);
   }
-
-  const topLeft = document.createElement("div");
-  topLeft.classList.add("top-left");
-  const bottomRight = document.createElement("div");
-  bottomRight.classList.add("bottom-right");
-
-  topLeft.appendChild(simbolo);
-  bottomRight.appendChild(simbolo.cloneNode(true));
-
-  card.appendChild(topLeft);
-  card.appendChild(bottomRight);
 
   card.addEventListener("dragstart", () => card.classList.add("dragging"));
   card.addEventListener("touchstart", () => card.classList.add("dragging"));
 
-  card.addEventListener("dragend", () => card.classList.remove("dragging"));
-  card.addEventListener("touchend", () => card.classList.remove("dragging"));
+  card.addEventListener("dragend", () => {
+    recalculateDeck();
+    card.classList.remove("dragging")
+  });
+  card.addEventListener("touchend", () => {
+    recalculateDeck();
+    card.classList.remove("dragging")
+  });
 
   return card;
 }
@@ -145,10 +163,29 @@ function generateCard(valor, palo, hidden = false) {
 jugador.addEventListener("dragover", dragOver);
 jugador.addEventListener("touchmove", dragOver);
 
+// Recalcula la baraja del jugador cuando se mueven las cartas de lugar
+function recalculateDeck() {
+  let newDeck = [];
+  Array.from(jugador.children).forEach(children => {
+    const id = children.id;
+    const index = getElementIndex(children);
+    const card = mazo.find(card => card.id === id);
+    newDeck[index] = card;
+  })
+  mazo = newDeck;
+}
+
 function dragOver(e) {
   e.preventDefault();
-  const afterElement = getDragAfterElement(e.clientX);
+  let posX = null;
+  if (e.type === "touchmove") {
+    posX = e.touches[0].clientX;
+  } else {
+    posX = e.clientX;
+  }
+  const afterElement = getDragAfterElement(posX);
   const draggable = document.querySelector(".dragging");
+
   if (afterElement === null) {
     jugador.appendChild(draggable);
   } else {
@@ -172,9 +209,21 @@ function getDragAfterElement(x) {
   ).element;
 }
 
-function descartar(carta, { valor, palo }, index) {
-  socket.emit("descarta", { valor, palo }, index);
-  descarte.appendChild(carta);
+function getCardFromElementId(id) {
+  return mazo.find(card => card.id === id);
+}
+
+function descartar(carta, index) {
+  let c = getCardFromElementId(carta.id);
+  let i = mazo.indexOf(c);
+  let {valor, palo} = c;
+  mazo.splice(i, 1);
+  socket.emit("descarta", { valor, palo }, index, corta);
+  jugador.removeChild(carta);
+  const nuevaCarta = generateCard(valor, palo, corta);
+  nuevaCarta.removeAttribute("draggable");
+  descarte.appendChild(nuevaCarta);
+  if(corta) socket.emit("finaliza-ronda");
 }
 
 function puedeDescartar() {
@@ -189,13 +238,20 @@ function finalizaTurno() {
   return tomoCarta && descartoCarta;
 }
 
+function getElementIndex(element) {
+  return Array.from(jugador.children).indexOf(element);
+}
+
+botonCortar.addEventListener("click", e => {
+  corta = true;
+})
+
 jugador.addEventListener("click", (e) => {
   if (e.target.classList.contains("carta") && puedeDescartar()) {
-    const index = [Array.from(e.target.parentNode.children).indexOf(e.target)];
-    const carta = mazo.splice(index, 1)[0];
-    descartar(e.target, carta, mazo.length - index);
+    const index = getElementIndex(e.target)
+    descartar(e.target, (mazo.length - 1) - index);
     descartoCarta = true;
-    if (finalizaTurno()) {
+    if (finalizaTurno() && !corta) {
       turno = false;
       turnoActual.innerText = nombreJugador2;
       socket.emit("finaliza-turno");

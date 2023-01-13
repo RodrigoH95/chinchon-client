@@ -1,12 +1,31 @@
 body {
+  position: relative;
   background-color:rgb(100, 74, 56);
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow: hidden;
+  width: 80%;
+  margin: auto;
+}
+
+#interfaz {
+  position: absolute;
+  align-self: center;
+  text-align: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  top: 50%;
+  font-size: 1.5rem;
+  transform: translateY(-50%);
+}
+
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
 }
 
 #tablero {
-  border: 1px solid black;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -17,6 +36,7 @@ body {
   height: 30%;
   display: flex;
   justify-content: center;
+  margin-left: -3rem;
 }
 
 .player > .carta {
@@ -98,6 +118,7 @@ body {
 .palo {
   width: 32px;
   height: 32px;
+  image-rendering: optimizeQuality;
 }
 
 .valor {
@@ -119,8 +140,16 @@ body {
 }
 
 @media screen and (max-width: 700px) {
+  body {
+    width: 100%;
+  }
+
   #tablero {
     justify-content: space-around;
+  }
+
+  #interfaz {
+    font-size: 12px;
   }
 
   .carta {
@@ -140,6 +169,43 @@ body {
   #resto {
     width: 65px;
     height: 90px;
+  }
+
+  .player {
+    margin-left: -2rem;
+  }
+
+  .player > .carta {
+    margin-right: -2rem;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  #tablero {
+    justify-content: space-around;
+  }
+
+  .carta {
+    width: 50px;
+    height: 70px;
+  }
+
+  .palo {
+    width: 15px;
+    height: 15px;
+  }
+
+  .simbolo {
+    font-size: 0.8rem;
+  }
+
+  #resto {
+    width: 50px;
+    height: 70px;
+  }
+
+  .player {
+    margin-left: -2rem;
   }
 
   .player > .carta {

@@ -103,6 +103,10 @@ table, th, td {
   outline-offset: -7px;
 }
 
+.dragging {
+  opacity: 0.7;
+}
+
 .simbolo {
   margin: 0.3rem;
   text-align: center;

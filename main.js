@@ -14,23 +14,22 @@ let descartoCarta = null;
 let nombreJugador1 = null;
 let nombreJugador2 = null;
 
-const DEBUG = false;
+const DEBUG = true;
 
 socket.on("connect", () => {
   console.log("Te uniste a la sala");
-  if(DEBUG) {
+  if (DEBUG) {
     nombreJugador1 = "test";
-  }
-  else {
+  } else {
     nombreJugador1 = prompt("Tu nombre:");
   }
   socket.emit("user-join", nombreJugador1);
   local.innerText = nombreJugador1;
 });
 
-socket.on("other-join", data => {
-  if(data.length < 2) return;
-  nombreJugador2 = data.find(player => player.id !== socket.id).name;
+socket.on("other-join", (data) => {
+  if (data.length < 2) return;
+  nombreJugador2 = data.find((player) => player.id !== socket.id).name;
   adversario.innerText = nombreJugador2;
 });
 
@@ -84,10 +83,10 @@ function createCardId() {
   const letters = "abcdefghijklmnopqrstuvwxyz";
   const numbers = "0123456789";
   let result = "";
-  for(let i = 0; i < 8; i++) {
+  for (let i = 0; i < 8; i++) {
     let pick = Math.floor(Math.random() * 2)
-    ? letters[Math.floor(Math.random() * letters.length)]
-    : numbers[Math.floor(Math.random() * numbers.length)];
+      ? letters[Math.floor(Math.random() * letters.length)]
+      : numbers[Math.floor(Math.random() * numbers.length)];
     result += pick;
   }
   return result;
@@ -134,15 +133,43 @@ function generateCard(valor, palo, hidden = false) {
   card.appendChild(topLeft);
   card.appendChild(bottomRight);
 
-  card.ondragstart = dragStart;
+  card.addEventListener("dragstart", () => card.classList.add("dragging"));
+  card.addEventListener("touchstart", () => card.classList.add("dragging"));
+
+  card.addEventListener("dragend", () => card.classList.remove("dragging"));
+  card.addEventListener("touchend", () => card.classList.remove("dragging"));
 
   return card;
 }
 
-function dragStart(e) {
+jugador.addEventListener("dragover", dragOver);
+jugador.addEventListener("touchmove", dragOver);
+
+function dragOver(e) {
   e.preventDefault();
-  console.log("drag started");
-  e.dataTransfer.setData("text", e.target.id);
+  const afterElement = getDragAfterElement(e.clientX);
+  const draggable = document.querySelector(".dragging");
+  if (afterElement === null) {
+    jugador.appendChild(draggable);
+  } else {
+    jugador.insertBefore(draggable, afterElement);
+  }
+}
+
+function getDragAfterElement(x) {
+  const elements = [...jugador.querySelectorAll(".carta:not(.dragging)")];
+  return elements.reduce(
+    (closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = x - box.left - box.width / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    },
+    { offset: Number.NEGATIVE_INFINITY }
+  ).element;
 }
 
 function descartar(carta, { valor, palo }, index) {
@@ -160,17 +187,6 @@ function puedeTomarCarta() {
 
 function finalizaTurno() {
   return tomoCarta && descartoCarta;
-}
-
-jugador.ondragover = (e) => {
-  e.preventDefault();
-  console.log("dragover");
-}
-
-jugador.ondrop = (e) => {
-  const data = e.dataTransfer.getData("text");
-  e.target.appendChild(document.getElementById(data))
-  console.log("Drop", data);
 }
 
 jugador.addEventListener("click", (e) => {

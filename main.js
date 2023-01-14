@@ -21,7 +21,7 @@ let nombreJugador1 = null;
 let nombreJugador2 = null;
 let corta = false;
 
-const DEBUG = true;
+const DEBUG = false;
 
 socket.on("connect", () => {
   console.log("Te uniste a la sala");

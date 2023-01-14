@@ -6,6 +6,8 @@ const local = document.getElementById("local");
 const turnoActual = document.getElementById("turno");
 const adversario = document.getElementById("adversario");
 const botonCortar = document.getElementById("btn-cortar");
+const puntaje1 = document.getElementById("puntaje1");
+const puntaje2 = document.getElementById("puntaje2");
 
 const socket = io("https://chinchon-server.onrender.com");
 //https://chinchon-server.onrender.com
@@ -19,12 +21,12 @@ let nombreJugador1 = null;
 let nombreJugador2 = null;
 let corta = false;
 
-const DEBUG = false;
+const DEBUG = true;
 
 socket.on("connect", () => {
   console.log("Te uniste a la sala");
   if (DEBUG) {
-    nombreJugador1 = "test";
+    nombreJugador1 = socket.id.substring(0, 5);
   } else {
     nombreJugador1 = prompt("Tu nombre:");
   }
@@ -40,7 +42,15 @@ socket.on("other-join", (data) => {
 
 socket.on("match-start", () => {
   limpiarTablero();
+  puntaje1.innerText = 0;
+  puntaje2.innerText = 0;
 });
+
+socket.on("round-start", () => {
+  limpiarTablero();
+  corta = false;
+  turno = null;
+})
 
 socket.on("turno", (id) => {
   if (socket.id === id) {
@@ -48,8 +58,10 @@ socket.on("turno", (id) => {
     turnoActual.innerText = nombreJugador1;
     tomoCarta = false;
     descartoCarta = false;
+    turnoActual.style.color = "blue";
   } else {
     turnoActual.innerText = nombreJugador2;
+    turnoActual.style.color = "red";
   }
 });
 
@@ -79,15 +91,25 @@ socket.on("eliminar-descarte", () => {
 
 socket.on("no-cards", () => {
   console.log("Servidor avisa que no hay cartas");
-  resto.style.backgroundColor = "transparent";
+  const bg = resto.style.backgroundImage;
+  resto.style.backgroundImage = "none";
+  resto.classList.remove("carta");
   descarte.innerHTML = "";
   setTimeout(() => {
-    resto.style.backgroundColor = "#b72929";
-  }, 1500);
+    resto.classList.add("carta");
+    resto.style.backgroundImage = bg;
+  }, 1000);
 });
 
-socket.on("finaliza-ronda", () => {
+socket.on("finaliza-ronda", (puntajes) => {
   console.log("Finaliza la ronda");
+  puntajes.forEach(puntaje => {
+    if(puntaje.id === socket.id) {
+      puntaje1.innerText = Number(puntaje1.innerText) + puntaje.puntaje;
+    } else {
+      puntaje2.innerText = Number(puntaje2.innerText) + puntaje.puntaje;
+    }
+  })
   turno = false;
 })
 
